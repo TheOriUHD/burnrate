@@ -59,6 +59,7 @@ Everything else (time zone, poll interval, theme, accounts, password, API token)
 | `BURNRATE_AUTH` | `password` | `none` turns the login off: **only** behind a reverse proxy that authenticates (Authelia, TinyAuth, oauth2-proxy, Cloudflare Access …). |
 | `BURNRATE_PASSWORD` | – | Sets the password at start, so no setup code is needed. |
 | `TZ` | `UTC` | Default time zone for a new instance. |
+| `BURNRATE_GEMINI_CLIENT_ID` / `_SECRET` | – | Gemini sign-in client. Not shipped; by default read once from the official Gemini CLI source on GitHub. |
 
 **Security.** Credentials are kept server-side in `secrets.json` (mode 0600) and never sent to the browser. The UI is
 same-origin only (JSON + fetch-metadata checks), the session cookie is `HttpOnly`. Put it behind HTTPS if it is
