@@ -1,5 +1,7 @@
 # Burnrate
 
+[![ci](https://github.com/TheOriUHD/burnrate/actions/workflows/ci.yml/badge.svg)](https://github.com/TheOriUHD/burnrate/actions/workflows/ci.yml) ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue) ![Windows · Linux · macOS · Docker](https://img.shields.io/badge/runs%20on-Windows%20%C2%B7%20Linux%20%C2%B7%20macOS%20%C2%B7%20Docker-555) [![MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 **One self-hosted page for every AI plan you pay for.** Burnrate polls your Claude, ChatGPT, Copilot, Cursor, Gemini,
 Z.ai, Kimi, Mistral, OpenRouter, DeepSeek … accounts (58 providers), keeps the history, and tells you whether you are on pace: how much of
 each limit is used, how much of the window has passed, and where you are likely to end up at the reset.
@@ -16,70 +18,118 @@ each limit is used, how much of the window has passed, and where you are likely 
 - **Sign-in flows in the browser:** API keys, OAuth with a pasted code, device codes (enter a short code at
   openai.com / github.com). Several accounts per provider are fine (work and personal).
 - **Integrations:** Prometheus `/metrics`, a JSON API, and a compact `/api/wall` for dashboards and wall displays.
-- **Tiny:** Python standard library only, SQLite, one process, ~30 MB RAM. Docker image or a plain `python -m burnrate`.
+- **Tiny:** Python standard library only, SQLite, one process, ~30 MB RAM. One-line install on Windows, Linux and
+  macOS, or Docker. [Get it running →](#get-it-running-2-minutes)
 
 <p><img src="docs/account.png" width="58%" alt="Account page"> <img src="docs/add-account.png" width="40%" alt="Add account"></p>
 
-## Quick start
+## Get it running (2 minutes)
 
-### One-line setup (Windows, Linux, macOS)
+### 1. Install
 
-Installs Burnrate for your user, starts it now and at every login, and opens http://127.0.0.1:8090.
-Only Python 3.11+ is needed (the Windows script offers to install it with winget). Run the same line again to update.
+Pick one. Every option keeps your data when you update.
 
-**Windows** (PowerShell):
+| You have | Run this | Then open |
+|---|---|---|
+| **Windows** (PowerShell) | `irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1 \| iex` | http://127.0.0.1:8090 (opens by itself) |
+| **Linux / macOS** | `curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh \| sh` | http://127.0.0.1:8090 (opens by itself) |
+| **Docker** | see below | http://localhost:8090 |
 
-```powershell
-irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1 | iex
-```
+The one-line installers need only **Python 3.11+**; the Windows one offers to install Python with winget if it is
+missing. They start Burnrate now and at every login, for your user only, no admin rights. To update, run the same line
+again.
 
-**Linux / macOS**:
+<details>
+<summary><b>Docker</b></summary>
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh | sh
+docker run -d --name burnrate --restart unless-stopped -p 8090:8090 -v burnrate-data:/data \
+  -e TZ=Europe/Berlin ghcr.io/theoriuhd/burnrate:latest
+docker logs burnrate          # shows the one-time setup code
 ```
 
-By default it only listens on your own machine, without a login. To reach it from your phone or other devices, add
-`-Lan` (Windows) or `--lan` (Linux/macOS): it then listens on the network and asks for a password, and the setup code
-for the first visit is in the log. Other options: port, no autostart, uninstall:
+Or with Compose: `git clone https://github.com/TheOriUHD/burnrate && cd burnrate && docker compose up -d`
+(see [`compose.yaml`](compose.yaml)). Update: `docker pull ghcr.io/theoriuhd/burnrate:latest`, then recreate the container.
+</details>
+
+<details>
+<summary><b>Plain Python, no installer</b></summary>
+
+```bash
+git clone https://github.com/TheOriUHD/burnrate && cd burnrate
+BURNRATE_DATA=./data python3 -m burnrate          # nothing to pip install
+```
+
+On a server, [`burnrate.service`](burnrate.service) is a hardened systemd unit for this.
+</details>
+
+### 2. Open the page
+
+- **Installer:** it opens straight away, no login, because it only listens on your own computer.
+- **Docker or `--lan`:** the first visit asks for a **setup code**. It is in the log (`docker logs burnrate`, or the
+  log file the installer prints). Enter it and choose a password.
+
+### 3. Add your first account
+
+**Settings → Add account**, pick the provider, follow the steps in the dialog. The most common ones:
+
+| Provider | What to do |
+|---|---|
+| **Claude** (Pro, Max, Team) | *Sign in with Claude.ai*: log in, copy the code shown on the page, paste it back. |
+| **ChatGPT / Codex** (Plus, Pro) | *Sign in with a code*: enter the short code at openai.com. |
+| **GitHub Copilot** | *Sign in with GitHub*: enter the short code at github.com/login/device. |
+| **Gemini** | *Sign in with Google*. |
+| **Mistral** (Vibe, API) | Paste an API key: a Vibe key from chat.mistral.ai/code/extensions or a key from console.mistral.ai. |
+| **OpenRouter, DeepSeek, xAI, …** | Paste the API key from the provider's dashboard. |
+| **Cursor, Perplexity, …** | Paste the session cookie (the dialog says where to find it). |
+
+The numbers appear after the first poll (a few seconds). The forecast gets better once a day or two of history exists.
+To look around before connecting anything, try the [demo](#demo).
+
+<details>
+<summary><b>Installer options: phone access, port, autostart, uninstall</b></summary>
+
+By default the installers listen only on `127.0.0.1` with no login. `--lan` / `-Lan` makes Burnrate reachable from your
+phone or other devices and turns the password login on.
 
 ```powershell
+# Windows: options need this form instead of "| iex"
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1))) -Lan -Port 9000
 & ([scriptblock]::Create((irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1))) -Uninstall
 ```
 
 ```bash
+# Linux / macOS
 curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh | sh -s -- --lan --port 9000
 curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh | sh -s -- --uninstall
 ```
 
+Also: `--no-autostart` / `-NoAutostart`. Uninstall asks before deleting your data.
+
 | | Windows | Linux / macOS |
 |---|---|---|
 | Program | `%LOCALAPPDATA%\Burnrate\venv` | `~/.local/share/burnrate/app` |
-| Data | `%LOCALAPPDATA%\Burnrate\data` | `~/.local/share/burnrate/data` |
-| Settings | `%LOCALAPPDATA%\Burnrate\start-burnrate.cmd` | `~/.local/share/burnrate/burnrate.env` |
+| Data (back this up) | `%LOCALAPPDATA%\Burnrate\data` | `~/.local/share/burnrate/data` |
+| Settings (port, listen, login) | `%LOCALAPPDATA%\Burnrate\start-burnrate.cmd` | `~/.local/share/burnrate/burnrate.env` |
+| Log | `data\burnrate.log` | `journalctl --user -u burnrate` (macOS: `data/burnrate.log`) |
 | Autostart | shortcut in the Startup folder | systemd user service / LaunchAgent |
+</details>
 
-### Docker
+<details>
+<summary><b>Something not working?</b></summary>
 
-```bash
-git clone https://github.com/TheOriUHD/burnrate && cd burnrate
-docker compose up -d
-docker logs burnrate          # shows the one-time setup code
-```
+- **"Python 3.11+ is required"**: install it from [python.org](https://www.python.org/downloads/) (Windows: tick
+  *Add python.exe to PATH*) or with `winget install Python.Python.3.13`, `brew install python`, `sudo apt install python3`.
+- **`irm … | iex` is blocked**: your PowerShell execution policy forbids scripts. Run
+  `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once, then try again.
+- **Port 8090 is taken**: reinstall with `--port 9000` / `-Port 9000`, or change `BURNRATE_PORT` in the settings file.
+- **Page doesn't open after a reboot**: on Linux without a desktop session, enable lingering once:
+  `sudo loginctl enable-linger $USER`.
+- **Account shows an error**: the card says why (expired login, wrong key). *Settings → the account → Reconnect*.
+- **Lost the setup code**: restart Burnrate; until a password is set, every start prints a new code in the log.
+</details>
 
-Open http://localhost:8090, enter the setup code, choose a password, then **Settings → Add account**.
-
-### Without Docker
-
-```bash
-git clone https://github.com/TheOriUHD/burnrate && cd burnrate
-BURNRATE_DATA=./data python3 -m burnrate          # Python 3.11+, nothing to install
-```
-
-For a permanent install there is a hardened systemd unit in [`burnrate.service`](burnrate.service).
-
-### Just look around
+### Demo
 
 ```bash
 BURNRATE_DATA=/tmp/burnrate-demo python3 -m burnrate demo     # 7 made-up accounts, 3 weeks of history
@@ -92,7 +142,7 @@ Everything else (time zone, poll interval, theme, accounts, password, API token)
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `BURNRATE_DATA` | `./data` (`/data` in Docker) | Database and `secrets.json`. Back this directory up. |
+| `BURNRATE_DATA` | `./data` (`/data` in Docker, see the table above for the installers) | Database and `secrets.json`. Back this directory up. |
 | `BURNRATE_LISTEN` / `BURNRATE_PORT` | `0.0.0.0` / `8090` | Where the web server listens. |
 | `BURNRATE_AUTH` | `password` | `none` turns the login off: **only** behind a reverse proxy that authenticates (Authelia, TinyAuth, oauth2-proxy, Cloudflare Access …). |
 | `BURNRATE_PASSWORD` | – | Sets the password at start, so no setup code is needed. |
