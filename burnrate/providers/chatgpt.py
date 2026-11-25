@@ -142,8 +142,12 @@ def parse(d):
     rc = d.get("rate_limit_reset_credits") or {}
     if rc.get("available_count") is not None:
         info.append({"label": "Limit reset credits", "value": f"{rc['available_count']} available"})
-    return {"plan": PLANS.get(plan, plan.replace("_", " ").title()) if plan else None, "windows": wins, "balances": bals,
+    return {"plan": PLANS.get(plan.lower(), plan.replace("_", " ").title()) if plan else None, "windows": wins, "balances": bals,
             "info": info}
 
 
-PLANS = {"prolite": "Pro Lite", "free_workspace": "Free workspace", "k12": "K-12", "edu": "Edu"}
+# plan_type -> the name OpenAI sells it under. prolite/pro are confirmed (Codex CLI, CodexBar); the $500 tier's id is
+# not known yet, so likely spellings are mapped and any other value shows up as-is.
+PLANS = {"prolite": "Pro 100", "pro_lite": "Pro 100", "pro-lite": "Pro 100", "pro": "Pro 200",
+         "promax": "Pro 500", "pro_max": "Pro 500", "pro-max": "Pro 500", "pro500": "Pro 500", "pro_500": "Pro 500",
+         "free_workspace": "Free workspace", "k12": "K-12", "edu": "Edu"}

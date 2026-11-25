@@ -28,6 +28,8 @@ class Parsers(unittest.TestCase):
             "credits": {"has_credits": True, "unlimited": False, "balance": "5"}}
         s = chatgpt.parse(d)
         self.assertEqual(s["plan"], "Plus")
+        for raw, name in (("prolite", "Pro 100"), ("pro", "Pro 200"), ("pro_max", "Pro 500")):
+            self.assertEqual(chatgpt.parse(dict(d, plan_type=raw))["plan"], name)
         wk = [w for w in s["windows"] if w["primary"]]
         self.assertEqual((len(wk), wk[0]["label"], wk[0]["pct"]), (1, "Weekly", 40))
         self.assertEqual(s["balances"][0]["amount"], 5)
