@@ -1,0 +1,34 @@
+# systemd unit for a bare install: git clone to /opt/burnrate, then
+#   useradd --system --home /var/lib/burnrate --shell /usr/sbin/nologin burnrate
+#   cp burnrate.service /etc/systemd/system/ && systemctl enable --now burnrate
+[Unit]
+Description=Burnrate (AI usage and limit tracker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=burnrate
+WorkingDirectory=/opt/burnrate
+Environment=BURNRATE_DATA=/var/lib/burnrate
+Environment=BURNRATE_PORT=8090
+# Environment=BURNRATE_AUTH=none
+ExecStart=/usr/bin/python3 -m burnrate
+Restart=on-failure
+RestartSec=5
+StateDirectory=burnrate
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=true
+MemoryMax=192M
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "burnrate"
+version = "0.1.0"
+description = "Self-hosted usage and limit tracker for AI subscriptions and API accounts"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+burnrate = "burnrate.__main__:main"
+
+[tool.setuptools]
+packages = ["burnrate", "burnrate.providers"]
+
+[tool.setuptools.package-data]
+burnrate = ["web/*"]

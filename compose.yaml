@@ -1,0 +1,14 @@
+services:
+  burnrate:
+    build: .
+    # image: ghcr.io/OWNER/burnrate:latest   # or use a published image
+    container_name: burnrate
+    restart: unless-stopped
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Europe/Berlin            # default time zone (can be changed in Settings)
+      # BURNRATE_PASSWORD: change-me   # skip the first-run setup code
+      # BURNRATE_AUTH: none            # only behind a reverse proxy that authenticates
