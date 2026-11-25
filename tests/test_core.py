@@ -45,6 +45,10 @@ class Parsers(unittest.TestCase):
             "chat": {"unlimited": True}}})
         self.assertEqual(len(s["windows"]), 1)
         self.assertEqual((s["windows"][0]["pct"], s["windows"][0]["used"]), (30, 90))
+        self.assertEqual(copilot.parse({"copilot_plan": "individual", "access_type_sku": "free_educational_quota"})["plan"], "Education")
+        self.assertEqual(copilot.plan_name({"copilot_plan": "individual", "access_type_sku": "monthly_subscriber_quota"}), "Pro")
+        self.assertEqual(copilot.plan_name({"copilot_plan": "individual", "access_type_sku": "free_limited_copilot"}), "Free")
+        self.assertEqual(copilot.plan_name({"copilot_plan": "business"}), "Business")
         free = copilot.parse({"monthly_quotas": {"chat": 50, "completions": 2000}, "limited_user_quotas": {"chat": 40, "completions": 1500}})
         self.assertEqual(free["windows"][0]["pct"], 20)
 
@@ -93,6 +97,9 @@ class Parsers(unittest.TestCase):
                                                                          "reset_at": "2026-12-01T00:00:00Z"}}}])
         html = '<script>self.__next_f.push(' + json.dumps([1, "5:" + inner + "\n"]) + ')</script>'
         self.assertEqual(mistral.flight_budget(html)["api_budget"]["usage_percentage"], 12.5)
+        page = '<script>self.__next_f.push(' + json.dumps([1, '7:{"chatPlan":"EDU","activeCodePlan":null,"active_api_plan":"FREE"}\n']) + ')</script>'
+        self.assertEqual(mistral.flight_plans(page), {"chat": "EDU", "api": "FREE"})
+        self.assertEqual(mistral.plan_label("EDU"), "Education")
 
     def test_paste_parsing(self):
         self.assertEqual(OAuthPaste.parse_paste("abc#st"), ("abc", "st"))

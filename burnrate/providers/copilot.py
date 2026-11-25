@@ -57,5 +57,21 @@ def parse(d):
             if lim:
                 wins.append(window(key, NAMES.get(key, key.title()), used=lim - (rem or 0), limit=lim, unit="requests",
                                    resets=reset, period=30 * 86400, primary=key == "chat"))
-    plan = d.get("copilot_plan") or d.get("access_type_sku")
-    return {"plan": str(plan).replace("_", " ").title() if plan else None, "windows": wins}
+    return {"plan": plan_name(d), "windows": wins}
+
+
+def plan_name(d):
+    """access_type_sku says what the plan really is (copilot_plan is just 'individual' for every personal plan)."""
+    sku = (d.get("access_type_sku") or "").lower()
+    cp = (d.get("copilot_plan") or "").lower()
+    if "educational" in sku or "student" in sku or "teacher" in sku:
+        return "Education"
+    if cp in ("business", "enterprise"):
+        return cp.title()
+    if "free_limited" in sku or sku.startswith("free"):
+        return "Free"
+    if "plus" in sku:
+        return "Pro+"
+    if "subscriber" in sku or "pro" in sku or "trial" in sku:
+        return "Pro" + (" (trial)" if "trial" in sku else "")
+    return (cp or sku).replace("_", " ").title() or None

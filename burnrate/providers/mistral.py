@@ -20,16 +20,39 @@ def cookies(raw):
     return parts
 
 
-def flight_budget(html):
-    """Find {"budget": {"api_budget": …, "vibe_budget": …}} in the Next.js flight data of /subscription."""
+PLANS = {"EDU": "Education", "PRO": "Pro", "TEAM": "Team", "FREE": "Free", "ENTERPRISE": "Enterprise", "STUDENT": "Education"}
+
+
+def flight_texts(html):
     texts = [html]
     for m in re.finditer(r'self\.__next_f\.push\((\[1,\s*"(?:[^"\\]|\\.)*"\])\)', html, re.S):
         try:
             texts.append(json.loads(m.group(1))[1])
         except Exception:
             pass
+    return texts
+
+
+def flight_plans(html):
+    """Le Chat / code / API plan codes from the page data, e.g. chatPlan "EDU", activeCodePlan null, active_api_plan "FREE"."""
+    out = {}
+    for t in flight_texts(html):
+        for key, name in (("chatPlan", "chat"), ("active_chat_plan", "chat"), ("activeCodePlan", "code"),
+                          ("active_code_plan", "code"), ("active_api_plan", "api"), ("apiPlan", "api")):
+            m = re.search(r'"%s"\s*:\s*"([A-Za-z_]+)"' % key, t)
+            if m and name not in out:
+                out[name] = m.group(1).upper()
+    return out
+
+
+def plan_label(code):
+    return PLANS.get(code, code.replace("_", " ").title()) if code else None
+
+
+def flight_budget(html):
+    """Find {"budget": {"api_budget": …, "vibe_budget": …}} in the Next.js flight data of /subscription."""
     dec = json.JSONDecoder()
-    for t in texts:
+    for t in flight_texts(html):
         for m in re.finditer(r'"budget"\s*:\s*\{', t):
             try:
                 obj, _ = dec.raw_decode(t, m.end() - 1)
@@ -97,7 +120,10 @@ class Mistral(Provider):
             pass
         if wins and not any(w["primary"] for w in wins):
             wins[0]["primary"] = True
-        return {"windows": wins, "balances": bals}
+        plans = flight_plans(html)
+        info = [{"label": f"{label} plan", "value": plan_label(plans[k])}
+                for k, label in (("chat", "Le Chat"), ("code", "Code"), ("api", "API")) if plans.get(k)]
+        return {"plan": plan_label(plans.get("chat") or plans.get("code")), "windows": wins, "balances": bals, "info": info}
 
     def admin(self, acct):
         d = self.get(acct, "https://api.mistral.ai/v1/admin/spend-limit")
