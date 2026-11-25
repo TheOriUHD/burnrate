@@ -58,7 +58,7 @@ async function boot(){
 addEventListener('hashchange',()=>{closeModal();route()});
 function route(){
   if(!S.session||!S.session.logged_in)return;
-  clearInterval(S.timer);hideTip();
+  clearTimeout(S.timer);clearInterval(S.tick);S.nav=(S.nav||0)+1;hideTip();
   const h=location.hash.replace(/^#\/?/,'').split('/');
   if(h[0]==='a'&&h[1])return accountPage(+h[1]);
   if(h[0]==='settings')return settingsPage().then(()=>{if(h[1]==='add')addAccount(h[2]||null)});
@@ -136,8 +136,14 @@ function sparkSVG(v,a,unit){
   const cap=fresh&&tot<=0?'collecting since '+dt(a.first_ts,{hour:'2-digit',minute:'2-digit'}):tot>0?(unit?unit(tot):f1(tot)+' %')+' in 24 h':'nothing used in 24 h';
   return '<div class="sparkbox">'+svg+'</svg><div class="sparkcap"><span>last 24 h</span><span>'+esc(cap)+'</span></div></div>';
 }
+/* one refresh timer per tab: a page re-renders itself once a minute (never stacks, stops when you navigate away,
+   waits while a dialog is open) */
+function later(nav,fn){clearTimeout(S.timer);S.timer=setTimeout(function tick(){if(nav!==S.nav)return;
+  if(!$('modal').hidden||document.hidden){S.timer=setTimeout(tick,15000);return}fn()},60000)}
+
 /* ---------- overview ---------- */
 async function overviewPage(filter){
+  const nav=S.nav;
   document.title=(S.session.title||'Burnrate');
   let d;try{d=await api('/api/overview')}catch(e){return}
   S.data=d;
@@ -168,7 +174,7 @@ async function overviewPage(filter){
   document.querySelectorAll('.chips button').forEach(b=>b.onclick=()=>location.hash=b.dataset.f?'#/p/'+b.dataset.f:'#/');
   document.querySelectorAll('.acard').forEach(c=>{c.onclick=()=>location.hash='#/a/'+c.dataset.id;c.onkeydown=e=>{if(e.key==='Enter')c.click()}});
   if($('addc'))$('addc').onclick=()=>addAccount();
-  S.timer=setInterval(()=>{if(!document.querySelector('#modal:not([hidden])'))overviewPage(filter)},60000);
+  later(nav,()=>overviewPage(filter));
 }
 function card(a){
   const [dot,stxt]=statusOf(a),w=prim(a);
@@ -305,6 +311,7 @@ function story(w){
 
 /* ---------- account page ---------- */
 async function accountPage(id){
+  const nav=S.nav;
   let a;try{a=await api('/api/accounts/'+id)}catch(e){$('app').innerHTML=topbar()+'<div class="banner">'+ICON.crit+'<div>'+esc(e.message)+'</div></div>';return}
   document.title=a.label+' · '+(S.session.title||'Burnrate');
   KEYS=Object.keys(a.names||{});NAMES=Object.assign({_total:'Total'},a.names||{});
@@ -366,7 +373,7 @@ async function accountPage(id){
   const cd=()=>{const e=$('countdown');if(!e||!w||!w.resets)return;let s=Math.max(0,w.resets-Date.now()/1000);const d=Math.floor(s/86400);s-=d*86400;const hh=Math.floor(s/3600);s-=hh*3600;const m=Math.floor(s/60),x=Math.floor(s-m*60);
     e.innerHTML=(d?d+'<small>d</small> ':'')+String(hh).padStart(2,'0')+':'+String(m).padStart(2,'0')+'<small>:'+String(x).padStart(2,'0')+'</small>'};
   cd();clearInterval(S.tick);S.tick=setInterval(cd,1000);
-  S.timer=setInterval(()=>{if(!document.querySelector('#modal:not([hidden])'))accountPage(id)},60000);
+  later(nav,()=>accountPage(id));
 }
 function lastBreak(a){return KEYS.map(k=>[k,NAMES[k],(a.breakdown||[]).find(r=>r.key===k)?.pct||0])}
 

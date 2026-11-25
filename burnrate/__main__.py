@@ -27,6 +27,8 @@ def main():
         from . import demo
         demo.run()
         return
+    import faulthandler, signal
+    faulthandler.register(signal.SIGUSR1, all_threads=True)     # kill -USR1 <pid>: stack of every thread to stderr
     core.init()
     engine.load_status()
     server.init_auth()

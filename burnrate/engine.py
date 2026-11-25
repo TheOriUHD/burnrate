@@ -320,7 +320,34 @@ def analyse_balance(b, now, aid, z):
     return out
 
 
+_view_cache, _view_locks, _cache_lock = {}, {}, threading.Lock()
+VIEW_TTL = 15     # seconds; views only change when a poll stores a sample (plus the clock moving on)
+
+
 def account_view(a, full=False, now=None):
+    """Cached per account: identical requests within VIEW_TTL (or while one is being computed) share one result."""
+    if now is not None:
+        return _account_view(a, full, now)
+    key = (a["id"], full)
+    sig = (latest_ts(a["id"]), st(a["id"])["error"], a["label"], a["enabled"], a.get("interval"), a["options"],
+           bool(core.creds(a["id"])))
+    with _cache_lock:
+        lk = _view_locks.setdefault(key, threading.Lock())
+    with lk:
+        hit = _view_cache.get(key)
+        if hit and hit[1] == sig and time.time() - hit[0] < VIEW_TTL:
+            return hit[2]
+        v = _account_view(a, full, None)
+        _view_cache[key] = (time.time(), sig, v)
+        return v
+
+
+def latest_ts(aid):
+    with core.db() as c:
+        return c.execute("SELECT MAX(ts) FROM snapshots WHERE account=?", (aid,)).fetchone()[0]
+
+
+def _account_view(a, full=False, now=None):
     now = now or core.now()
     z = core.tz()
     aid = a["id"]

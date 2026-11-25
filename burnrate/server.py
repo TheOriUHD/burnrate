@@ -465,6 +465,7 @@ def _wants_options(fn):
 
 
 def serve():
+    ThreadingHTTPServer.request_queue_size = 64
     srv = ThreadingHTTPServer((core.LISTEN, core.PORT), H)
     srv.daemon_threads = True
     core.log(f"burnrate {core.VERSION} on http://{core.LISTEN}:{core.PORT}  data={core.DATA}  auth={core.AUTH}")
