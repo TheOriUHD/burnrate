@@ -1,4 +1,5 @@
 """Claude.ai subscriptions (Pro, Max, Team, Enterprise, ...) via the endpoint Claude Code's /usage uses (unofficial)."""
+import time
 from .. import core
 from .base import Provider, OAuthPaste, Fields, Field, window, balance, HOUR, WEEK
 
@@ -40,7 +41,52 @@ class Claude(Provider):
         d = self.get(acct, USAGE, headers={"anthropic-beta": "oauth-2025-04-20"})
         if not isinstance(d, dict) or "seven_day" not in d:
             raise RuntimeError("unexpected answer from the usage endpoint (format changed?)")
-        return parse(d)
+        out = parse(d)
+        prof = self.profile(acct)
+        if prof:
+            out["plan"], out["info"] = plan_of(prof)
+        return out
+
+    def profile(self, acct):
+        """Plan from /api/oauth/profile (what Claude Code reads), at most every 6 h; never fails the usage poll."""
+        hit = _profiles.get(acct.id)
+        if hit and time.time() - hit[0] < 6 * 3600:
+            return hit[1]
+        try:
+            p = self.get(acct, PROFILE, headers={"anthropic-beta": "oauth-2025-04-20"})
+        except Exception:
+            return hit[1] if hit else None
+        _profiles[acct.id] = (time.time(), p)
+        return p
+
+
+PROFILE = "https://api.anthropic.com/api/oauth/profile"
+_profiles = {}     # account id -> (fetched at, profile)
+
+
+def plan_of(p):
+    """(plan name, info rows) from the profile, e.g. plan_display_name "Ultra" or claude_max + ..._20x -> Max 20x."""
+    org = p.get("organization") or {}
+    acc = p.get("account") or {}
+    name = org.get("plan_display_name") or (org.get("plan_display_label") or "").removesuffix(" plan").strip()
+    tier = org.get("rate_limit_tier") or ""
+    typ = org.get("organization_type") or ""
+    if not name:
+        mult = next((m for m in ("20x", "5x") if tier.endswith(m)), None)
+        if "max" in typ or acc.get("has_claude_max"):
+            name = "Max" + (f" {mult}" if mult else "")
+        elif "pro" in typ or acc.get("has_claude_pro"):
+            name = "Pro"
+        elif typ:
+            name = typ.replace("claude_", "").replace("_", " ").title()
+    info = []
+    if tier:
+        info.append({"label": "Rate limit tier", "value": tier.replace("default_", "").replace("_", " ")})
+    if org.get("subscription_status"):
+        info.append({"label": "Subscription", "value": org["subscription_status"]})
+    if org.get("has_extra_usage_enabled") is not None:
+        info.append({"label": "Extra usage allowed", "value": "yes" if org["has_extra_usage_enabled"] else "no"})
+    return name or None, info
 
 
 def parse(d):

@@ -21,6 +21,12 @@ class Parsers(unittest.TestCase):
         self.assertEqual(s["balances"][0]["limit"], 20.0)
         self.assertEqual(s["breakdown"]["rows"][0]["pct"], 40)
 
+    def test_claude_plan(self):
+        self.assertEqual(claude.plan_of({"organization": {"plan_display_name": "Ultra", "rate_limit_tier": "default_claude_max_20x"}})[0], "Ultra")
+        self.assertEqual(claude.plan_of({"organization": {"plan_display_label": "Ultra plan"}})[0], "Ultra")
+        self.assertEqual(claude.plan_of({"organization": {"organization_type": "claude_max", "rate_limit_tier": "default_claude_max_5x"}})[0], "Max 5x")
+        self.assertEqual(claude.plan_of({"account": {"has_claude_pro": True}, "organization": {}})[0], "Pro")
+
     def test_chatgpt(self):
         d = {"plan_type": "plus", "rate_limit": {
             "primary_window": {"used_percent": 12, "reset_at": NOW + 3600, "limit_window_seconds": 18000},
