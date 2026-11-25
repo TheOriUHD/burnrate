@@ -3,6 +3,20 @@ import os, sys, threading
 from . import core, engine, server
 
 
+def _log_streams():
+    """pythonw (Windows, no console) has no stdout/stderr: log to <data>/burnrate.log instead.
+    Everywhere: never die on a character the console code page can't show."""
+    if sys.stderr is None or sys.stdout is None:
+        f = open(os.path.join(core.DATA, "burnrate.log"), "a", encoding="utf-8", buffering=1)
+        sys.stdout = sys.stdout or f
+        sys.stderr = sys.stderr or f
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(errors="replace")
+        except Exception:
+            pass
+
+
 def main():
     os.umask(0o077)
     if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
@@ -27,9 +41,16 @@ def main():
         from . import demo
         demo.run()
         return
-    import faulthandler, signal
-    faulthandler.register(signal.SIGUSR1, all_threads=True)     # kill -USR1 <pid>: stack of every thread to stderr
     core.init()
+    _log_streams()
+    try:                                                        # lets the installers stop exactly this process
+        with open(os.path.join(core.DATA, "burnrate.pid"), "w") as f:
+            f.write(str(os.getpid()))
+    except OSError:
+        pass
+    import faulthandler, signal
+    if hasattr(signal, "SIGUSR1"):                              # not on Windows
+        faulthandler.register(signal.SIGUSR1, all_threads=True)  # kill -USR1 <pid>: stack of every thread to stderr
     engine.load_status()
     server.init_auth()
     threading.Thread(target=engine.poller, daemon=True, name="poller").start()

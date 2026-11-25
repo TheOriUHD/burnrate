@@ -259,7 +259,9 @@ class H(BaseHTTPRequestHandler):
 
     def static(self, name):
         path = os.path.join(WEB, name)
-        ctype = mimetypes.guess_type(path)[0] or "application/octet-stream"
+        # fixed types: on Windows mimetypes reads the registry, which may say text/plain for .js
+        ctype = {".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml"}.get(
+            os.path.splitext(name)[1]) or mimetypes.guess_type(path)[0] or "application/octet-stream"
         if ctype.startswith("text/") or ctype.endswith("javascript"):
             ctype += "; charset=utf-8"
         with open(path, "rb") as f:

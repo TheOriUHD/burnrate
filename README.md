@@ -22,6 +22,44 @@ each limit is used, how much of the window has passed, and where you are likely 
 
 ## Quick start
 
+### One-line setup (Windows, Linux, macOS)
+
+Installs Burnrate for your user, starts it now and at every login, and opens http://127.0.0.1:8090.
+Only Python 3.11+ is needed (the Windows script offers to install it with winget). Run the same line again to update.
+
+**Windows** (PowerShell):
+
+```powershell
+irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1 | iex
+```
+
+**Linux / macOS**:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh | sh
+```
+
+By default it only listens on your own machine, without a login. To reach it from your phone or other devices, add
+`-Lan` (Windows) or `--lan` (Linux/macOS): it then listens on the network and asks for a password, and the setup code
+for the first visit is in the log. Other options: port, no autostart, uninstall:
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1))) -Lan -Port 9000
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.ps1))) -Uninstall
+```
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh | sh -s -- --lan --port 9000
+curl -fsSL https://raw.githubusercontent.com/TheOriUHD/burnrate/main/install.sh | sh -s -- --uninstall
+```
+
+| | Windows | Linux / macOS |
+|---|---|---|
+| Program | `%LOCALAPPDATA%\Burnrate\venv` | `~/.local/share/burnrate/app` |
+| Data | `%LOCALAPPDATA%\Burnrate\data` | `~/.local/share/burnrate/data` |
+| Settings | `%LOCALAPPDATA%\Burnrate\start-burnrate.cmd` | `~/.local/share/burnrate/burnrate.env` |
+| Autostart | shortcut in the Startup folder | systemd user service / LaunchAgent |
+
 ### Docker
 
 ```bash
@@ -106,7 +144,7 @@ those tools do on your machine; Burnrate never sees your password.
 | **LongCat** | subscription | Token allowance used, fuel packs left | Session cookie | internal endpoint |
 | **Manus** | subscription | Monthly plan credits, refresh credits, total balance | Session cookie | internal endpoint |
 | **MiniMax Coding Plan** | subscription | Coding/token plan: current window and weekly quota | API key | internal endpoint |
-| **Mistral** | subscription | Plan budgets (included API, Vibe) with reset, credits; or the Enterprise Admin API spend limit | Console cookie, Admin API key | internal endpoint |
+| **Mistral** | subscription | Vibe plan budget (chat + code) and the included-API budget with reset; spend limit and credits optional | API key, Console cookie, Admin API key only | official API |
 | **Neuralwatt** | subscription | kWh used of the plan's energy allowance, prepaid balance, key allowance | API key | internal endpoint |
 | **Ollama Cloud** | subscription | Included cloud usage (session/weekly or monthly allowance), purchased credit | API key | internal endpoint |
 | **OpenCode Go** | subscription | Go subscription 5-hour, weekly and monthly quotas | API key | internal endpoint |
@@ -146,7 +184,7 @@ those tools do on your machine; Burnrate never sees your password.
 | **xAI API** | API / credits | Prepaid credit balance (team billing, management API) | API key | official API |
 <!-- providers:end -->
 
-Not possible today: **Le Chat** message limits (no source; Mistral Pro/Team budgets work), **Gemini** consumer AI
+Not possible today: per-message limits for **Mistral Vibe** chat (Mistral exposes the monthly Vibe budget, which Burnrate shows), **Gemini** consumer AI
 Pro/Ultra (Google closed the Gemini CLI sign-in for personal accounts in June 2026), **JetBrains AI** (only local IDE
 files). Missing one? See [CONTRIBUTING.md](CONTRIBUTING.md): a provider is one small Python class.
 

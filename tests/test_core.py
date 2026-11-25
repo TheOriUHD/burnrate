@@ -107,6 +107,39 @@ class Parsers(unittest.TestCase):
         self.assertEqual(mistral.flight_plans(page), {"chat": "EDU", "api": "FREE"})
         self.assertEqual(mistral.plan_label("EDU"), "Education")
 
+    def test_mistral_api_key(self):
+        from unittest import mock
+        from burnrate.providers.base import Account
+        answers = {
+            "/billing/subscription": {"enterprise": False, "payg_enabled": False, "plan_name": "EDU", "vibe_payg_enabled": True},
+            "/billing/budget": {"api_budget": {"usage_percentage": 1.0, "initial_budget": 12.75, "currency": "EUR",
+                                               "reset_at": "2026-12-01T00:00:00Z"},
+                                "vibe_budget": {"usage_percentage": 7.4, "initial_budget": 127.5, "currency": "EUR",
+                                                "reset_at": "2026-12-01T00:00:00Z", "payg_enabled": True}},
+            "/api/vibe/whoami": {"plan_type": "chat", "plan_name": "EDU", "organization_kind": "personal"},
+        }
+
+        def fake(method, url, headers=None, **kw):
+            self.assertEqual(headers["Authorization"], "Bearer k1")
+            for k, v in answers.items():
+                if url.endswith(k):
+                    return v
+            raise core.HttpError(404, "", url)
+        acct = Account({"id": 1, "label": "m", "options": "{}"}, {"key": "k1", "_auth": "key"})
+        with mock.patch.object(core, "http", side_effect=fake):
+            out = REGISTRY["mistral"].fetch(acct)
+        self.assertEqual(out["plan"], "Education")
+        w = {x["id"]: x for x in out["windows"]}
+        self.assertTrue(w["vibe_budget"]["primary"])
+        self.assertAlmostEqual(w["vibe_budget"]["used"], 127.5 * 7.4 / 100)
+        self.assertEqual(w["api_budget"]["limit"], 12.75)
+        self.assertIn({"label": "Key", "value": "Vibe plan key"}, out["info"])
+        answers.pop("/billing/budget")
+        answers["/billing/subscription"]["plan_name"] = "INDIVIDUAL"
+        with mock.patch.object(core, "http", side_effect=fake):
+            out = REGISTRY["mistral"].fetch(acct)
+        self.assertEqual(out["plan"], "Pro")
+
     def test_paste_parsing(self):
         self.assertEqual(OAuthPaste.parse_paste("abc#st"), ("abc", "st"))
         self.assertEqual(OAuthPaste.parse_paste("http://127.0.0.1:1455/auth/callback?code=xyz&state=s1"), ("xyz", "s1"))
@@ -143,7 +176,7 @@ class Engine(unittest.TestCase):
     def test_view_and_forecast(self):
         v = engine.account_view(engine.account(self.aid), full=True)
         w = v["windows"][0]
-        self.assertEqual(w["pct"], 60)
+        self.assertIn(w["pct"], (60, 61))                                 # 5 days x 12 daytime hours, +1 by clock time
         self.assertIn(w["level"], ("good", "warn", "crit"))
         fc = w["forecast"]
         self.assertIsNotNone(fc)

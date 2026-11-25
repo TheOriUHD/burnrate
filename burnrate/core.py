@@ -1,7 +1,7 @@
 """Shared plumbing: configuration, SQLite storage, the secrets file, the HTTP client and small helpers."""
 import base64, contextlib, hashlib, json, os, secrets, sqlite3, sys, threading, time
 import urllib.error, urllib.parse, urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 VERSION = "0.1.0"
@@ -78,10 +78,11 @@ def all_settings():
 
 
 def tz():
+    """The configured zone; UTC when it is unknown or the system has no zone database (Windows without tzdata)."""
     try:
         return ZoneInfo(setting("timezone") or "UTC")
     except Exception:
-        return ZoneInfo("UTC")
+        return timezone.utc
 
 
 # ---------------------------------------------------------------- secrets (0600 JSON, never sent to the browser)
