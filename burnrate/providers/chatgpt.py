@@ -122,6 +122,12 @@ def parse(d):
             if isinstance(w, dict) and w.get("used_percent") is not None:
                 wins.append(window(f"x_{name}_{key}"[:60], f"{name} · {_label(w.get('limit_window_seconds'), '')}".strip(" ·"),
                                    w["used_percent"], resets=w.get("reset_at"), period=w.get("limit_window_seconds")))
+    crl = d.get("code_review_rate_limit") or {}
+    for key in ("primary_window", "secondary_window"):
+        w = crl.get(key)
+        if isinstance(w, dict) and w.get("used_percent") is not None:
+            wins.append(window(f"code_review_{key}", f"Code review · {_label(w.get('limit_window_seconds'), '')}".strip(" ·"),
+                               w["used_percent"], resets=w.get("reset_at"), period=w.get("limit_window_seconds")))
     bals = []
     cr = d.get("credits") or {}
     if cr.get("has_credits") and not cr.get("unlimited") and cr.get("balance") is not None:
@@ -132,4 +138,12 @@ def parse(d):
                            if sc.get("remaining_percent") is not None else None, used=sc.get("used"),
                            limit=sc.get("limit"), resets=sc.get("resets_at")))
     plan = d.get("plan_type")
-    return {"plan": plan.replace("_", " ").title() if plan else None, "windows": wins, "balances": bals}
+    info = []
+    rc = d.get("rate_limit_reset_credits") or {}
+    if rc.get("available_count") is not None:
+        info.append({"label": "Limit reset credits", "value": f"{rc['available_count']} available"})
+    return {"plan": PLANS.get(plan, plan.replace("_", " ").title()) if plan else None, "windows": wins, "balances": bals,
+            "info": info}
+
+
+PLANS = {"prolite": "Pro Lite", "free_workspace": "Free workspace", "k12": "K-12", "edu": "Edu"}

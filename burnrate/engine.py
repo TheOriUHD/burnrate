@@ -258,6 +258,11 @@ def forecast(hourly, covered, now, used, reset, z):
             "curve": curve, "typical_day": typical, "typical_total": round(sum(typical), 2)}
 
 
+def first_sample(aid):
+    with core.db() as c:
+        return c.execute("SELECT MIN(ts) FROM snapshots WHERE account=?", (aid,)).fetchone()[0]
+
+
 def latest(aid):
     with core.db() as c:
         r = c.execute("SELECT ts, data FROM snapshots WHERE account=? ORDER BY ts DESC LIMIT 1", (aid,)).fetchone()
@@ -327,7 +332,7 @@ def account_view(a, full=False, now=None):
          "mono": (prov.mono or prov.name[:1]) if prov else "?", "official": prov.official if prov else False,
          "category": prov.category if prov else "?", "connected": bool(core.creds(aid)),
          "last_ok": s["last_ok"], "last_try": s["last_try"], "error": s["error"], "error_at": s["error_at"],
-         "interval": a.get("interval") or core.setting("interval"), "sample_ts": ts}
+         "interval": a.get("interval") or core.setting("interval"), "sample_ts": ts, "first_ts": first_sample(aid)}
     if not snap:
         v.update(windows=[], balances=[], plan=None)
         return v

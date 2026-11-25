@@ -125,13 +125,17 @@ function balRow(b){
   return '<div class="wrow"><span class="n">'+esc(b.label)+(b.kind==='spent'?' (spent)':'')+'</span><span class="num">'+amount(b.amount,b.currency)+'</span>'+
     (b.pct!=null?track(b.pct,null,b.pct>=90?'crit':b.pct>=75?'warn':''):'')+(sub.length?'<span class="s">'+esc(sub.join(' · '))+'</span>':'')+'</div>';
 }
-function sparkSVG(v){
-  if(!v||!v.some(x=>x>0))return '';
-  const W=300,H=34,m=Math.max(...v),bw=W/v.length;
-  return '<svg class="spark" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" aria-label="use per hour, last 24 hours">'+
-    v.map((x,i)=>x>0?'<rect x="'+(i*bw+1).toFixed(1)+'" y="'+(H-Math.max(2,H*x/m)).toFixed(1)+'" width="'+(bw-2).toFixed(1)+'" height="'+Math.max(2,H*x/m).toFixed(1)+'" rx="1.5" fill="var(--use)" opacity="'+(0.35+0.65*x/m).toFixed(2)+'"/>':'').join('')+'</svg>';
+function sparkSVG(v,a,unit){
+  /* 24 hourly slots, always drawn: faint baseline per hour, a bar where something was used */
+  v=v||[];const W=300,H=30,n=24,bw=W/n,m=Math.max(0,...v),now=Date.now()/1000,tot=v.reduce((x,y)=>x+y,0);
+  const fresh=a.first_ts&&now-a.first_ts<86400,startSlot=fresh?Math.max(0,n-Math.ceil((now-a.first_ts)/3600)):0;
+  let svg='<svg class="spark" viewBox="0 0 '+W+' '+(H+3)+'" preserveAspectRatio="none" aria-hidden="true">';
+  for(let i=0;i<n;i++){const x=v[i]||0,X=(i*bw+1).toFixed(1),w=(bw-2).toFixed(1);
+    svg+='<rect x="'+X+'" y="'+H+'" width="'+w+'" height="3" rx="1" fill="var(--line)"'+(i<startSlot?' opacity=".35"':'')+'/>';
+    if(x>0){const h=Math.max(2,H*x/m);svg+='<rect x="'+X+'" y="'+(H-h).toFixed(1)+'" width="'+w+'" height="'+h.toFixed(1)+'" rx="1.5" fill="var(--use)" opacity="'+(0.4+0.6*x/m).toFixed(2)+'"/>'}}
+  const cap=fresh&&tot<=0?'collecting since '+dt(a.first_ts,{hour:'2-digit',minute:'2-digit'}):tot>0?(unit?unit(tot):f1(tot)+' %')+' in 24 h':'nothing used in 24 h';
+  return '<div class="sparkbox">'+svg+'</svg><div class="sparkcap"><span>last 24 h</span><span>'+esc(cap)+'</span></div></div>';
 }
-
 /* ---------- overview ---------- */
 async function overviewPage(filter){
   document.title=(S.session.title||'Burnrate');
@@ -185,7 +189,8 @@ function card(a){
     h+='<div><div class="bigamt num">'+amount(b.amount,b.currency)+'</div><div class="facts"><span>'+esc(b.label)+(b.kind==='spent'?' (spent)':'')+'</span>'+sub.map(x=>'<span><b>'+esc(x)+'</b></span>').join('')+'</div></div>'}
   const rest=(a.windows||[]).filter(x=>x!==w),rbal=w?(a.balances||[]):(a.balances||[]).slice(1);
   if(rest.length||rbal.length)h+='<div class="wins">'+rest.slice(0,4).map(winRow).join('')+rbal.slice(0,3).map(balRow).join('')+'</div>';
-  h+=sparkSVG(w?w.spark:((a.balances||[])[0]||{}).spark);
+  const b0=(a.balances||[])[0];
+  if(w||b0)h+=sparkSVG(w?w.spark:b0.spark,a,w?null:(v=>amount(v,b0.currency)));
   if(!a.connected)h+='<div class="err-line">'+ICON.crit+'<span>Not connected. Open Settings to sign in.</span></div>';
   else if(a.error)h+='<div class="err-line">'+ICON.crit+'<span>'+esc(a.error.slice(0,180))+'</span></div>';
   else if(!a.windows.length&&!a.balances.length)h+='<div class="sub">Waiting for the first sample…</div>';
