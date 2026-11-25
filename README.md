@@ -25,7 +25,7 @@ each limit is used, how much of the window has passed, and where you are likely 
 ### Docker
 
 ```bash
-git clone https://github.com/OWNER/burnrate && cd burnrate
+git clone https://github.com/TheOriUHD/burnrate && cd burnrate
 docker compose up -d
 docker logs burnrate          # shows the one-time setup code
 ```
@@ -35,7 +35,7 @@ Open http://localhost:8090, enter the setup code, choose a password, then **Sett
 ### Without Docker
 
 ```bash
-git clone https://github.com/OWNER/burnrate && cd burnrate
+git clone https://github.com/TheOriUHD/burnrate && cd burnrate
 BURNRATE_DATA=./data python3 -m burnrate          # Python 3.11+, nothing to install
 ```
 

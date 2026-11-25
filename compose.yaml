@@ -1,7 +1,7 @@
 services:
   burnrate:
     build: .
-    # image: ghcr.io/OWNER/burnrate:latest   # or use a published image
+    # image: ghcr.io/theoriuhd/burnrate:latest   # or use a published image
     container_name: burnrate
     restart: unless-stopped
     ports:
