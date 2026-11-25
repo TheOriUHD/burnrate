@@ -3,7 +3,7 @@ import importlib
 from .base import Provider
 
 MODULES = ["claude", "chatgpt", "copilot", "cursor", "gemini", "zai", "kimi", "minimax", "mistral", "devtools",
-           "webcookie", "credits"]
+           "webcookie", "credits", "more_api", "more_subs", "more_web", "litellm", "windsurf"]
 
 REGISTRY = {}
 for _m in MODULES:

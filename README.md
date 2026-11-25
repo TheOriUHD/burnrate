@@ -1,7 +1,7 @@
 # Burnrate
 
 **One self-hosted page for every AI plan you pay for.** Burnrate polls your Claude, ChatGPT, Copilot, Cursor, Gemini,
-Z.ai, Kimi, Mistral, OpenRouter, DeepSeek … accounts, keeps the history, and tells you whether you are on pace: how much of
+Z.ai, Kimi, Mistral, OpenRouter, DeepSeek … accounts (58 providers), keeps the history, and tells you whether you are on pace: how much of
 each limit is used, how much of the window has passed, and where you are likely to end up at the reset.
 
 ![Overview](docs/overview.png)
@@ -83,7 +83,66 @@ service. Sign-ins that reuse a provider's own CLI client (Claude Code, Codex, Ge
 those tools do on your machine; Burnrate never sees your password.
 
 <!-- providers:start (generated: python -m burnrate providers --markdown) -->
-PROVIDERS
+| Provider | Type | What you see | Connect with | Source |
+|---|---|---|---|---|
+| **Abacus AI** | subscription | Compute points used this billing month (ChatLLM / DeepAgent) | Session cookie | internal endpoint |
+| **Alibaba Coding Plan** | subscription | Model Studio / Bailian Coding Plan 5-hour, weekly and monthly quotas | API key | internal endpoint |
+| **Amp** | subscription | Amp Free daily allowance and credit balances | API key | internal endpoint |
+| **Augment Code** | subscription | Credits used this billing cycle and remaining | Session cookie | internal endpoint |
+| **ChatGPT / Codex** | subscription | Codex 5-hour and weekly limits of your ChatGPT plan, extra limits, credits | sign-in (device code), sign-in (paste code) | internal endpoint |
+| **Claude** | subscription | 5-hour and weekly limits, per-model limits, extra usage, where the week went (Code / Chat / Cowork) | sign-in (paste code), Paste a token | internal endpoint |
+| **ClinePass** | subscription | 5-hour, weekly and monthly plan limits | API key | internal endpoint |
+| **Codebuff** | subscription | Credits used of the quota, weekly subscription limit, credits left | API key | internal endpoint |
+| **Cursor** | subscription | Included usage of your plan this billing cycle, on-demand spend | Session cookie | internal endpoint |
+| **DevPass** | subscription | DevPass cycle credits, premium weekly allowance, key spend | API key | internal endpoint |
+| **ElevenLabs** | subscription | Credits (characters) used this cycle, voice slots | API key | official API |
+| **Factory (Droid)** | subscription | 5-hour, weekly and monthly limits, standard/premium token allowance, extra usage balance | API key | internal endpoint |
+| **Gemini Code Assist** | subscription | Daily request quotas per model (Gemini CLI / Code Assist) | sign-in (paste code) | internal endpoint |
+| **GitHub Copilot** | subscription | Premium requests, chat and completions quotas per month | sign-in (device code), Paste a token | internal endpoint |
+| **Kilo Code** | subscription | Kilo Pass credits used this period, credit balance | API key | internal endpoint |
+| **Kimi Code** | subscription | Kimi coding plan: 5-hour, weekly and monthly windows | API key | internal endpoint |
+| **Langdock** | subscription | Personal 5-hour session and weekly usage limits | Session cookie | internal endpoint |
+| **LongCat** | subscription | Token allowance used, fuel packs left | Session cookie | internal endpoint |
+| **Manus** | subscription | Monthly plan credits, refresh credits, total balance | Session cookie | internal endpoint |
+| **MiniMax Coding Plan** | subscription | Coding/token plan: current window and weekly quota | API key | internal endpoint |
+| **Mistral** | subscription | Plan budgets (included API, Vibe) with reset, credits; or the Enterprise Admin API spend limit | Console cookie, Admin API key | internal endpoint |
+| **Neuralwatt** | subscription | kWh used of the plan's energy allowance, prepaid balance, key allowance | API key | internal endpoint |
+| **Ollama Cloud** | subscription | Included cloud usage (session/weekly or monthly allowance), purchased credit | API key | internal endpoint |
+| **OpenCode Go** | subscription | Go subscription 5-hour, weekly and monthly quotas | API key | internal endpoint |
+| **Perplexity** | subscription | Credit balance, usage this period, renewal date | Session cookie | internal endpoint |
+| **Qoder** | subscription | Model credits used (own + shared quota), next reset | Session cookie | internal endpoint |
+| **Raycast AI** | subscription | AI credits left of this period's total, next refill | Session cookie | internal endpoint |
+| **StepFun Step Plan** | subscription | Coding Plan 5-hour and weekly windows, or Token Plan credit pool | Session token | internal endpoint |
+| **Synthetic** | subscription | Weekly plan limit and rolling 5-hour limit | API key | official API |
+| **T3 Chat** | subscription | 4-hour base usage window and monthly overage | Session cookie | internal endpoint |
+| **Trae CN** | subscription | Credits used of the current entitlement (trae.cn) | Session cookie | internal endpoint |
+| **Warp** | subscription | AI requests used in this refresh period, bonus credits | API key | internal endpoint |
+| **Windsurf** | subscription | Daily and weekly quota left, plan end | Session bundle | internal endpoint |
+| **Xiaomi MiMo Token Plan** | subscription | Token-plan credits used this period | API key | internal endpoint |
+| **Z.ai GLM Coding Plan** | subscription | Coding plan windows (5-hour, weekly), tool calls per month; China: account balance | API key | internal endpoint |
+| **Zed** | subscription | Edit predictions used, token spend against your spend limit | Session cookie | internal endpoint |
+| **ZenMux** | subscription | Subscription 5-hour and 7-day flow quotas, pay-as-you-go balance | API key | internal endpoint |
+| **Anthropic API** | API / credits | Organization spend this month (cost report), optional monthly budget | API key | official API |
+| **Deepgram** | API / credits | Requests, audio hours, tokens and TTS characters in the current usage period (all projects) | API key | official API |
+| **DeepInfra** | API / credits | Prepaid balance (or amount owed), spend this month, billing-cycle limit | API key | internal endpoint |
+| **DeepSeek** | API / credits | Account balance (topped up and granted) | API key | official API |
+| **Exa** | API / credits | Spend of one API key this month (Team Management API) | API key | official API |
+| **fal** | API / credits | Credit balance | API key | official API |
+| **Fireworks AI** | API / credits | Spend this month | API key | official API |
+| **GroqCloud** | API / credits | Spend, requests and tokens this month and today (console activity) | Session cookie | internal endpoint |
+| **Hugging Face** | API / credits | Inference Providers usage this month (included credits, billable, limit), ZeroGPU quota | API key | internal endpoint |
+| **LiteLLM** | API / credits | Personal and team budget of your LiteLLM proxy key, spend so far | API key | official API |
+| **Moonshot API** | API / credits | Open platform balance (cash and voucher) | API key | official API |
+| **OpenAI API** | API / credits | Organization spend this month (Costs API), optional monthly budget | API key | official API |
+| **OpenRouter** | API / credits | Credit balance, key spend limit, spend today/this week/this month | API key | official API |
+| **Poe** | API / credits | Compute points balance | API key | official API |
+| **Replicate** | API / credits | Spend this month (current invoice), prepaid credit | Session cookie | internal endpoint |
+| **SiliconFlow** | API / credits | Account balance (purchased and bonus) | API key | internal endpoint |
+| **Tavily** | API / credits | Plan credits used, key limit, pay-as-you-go credits | API key | official API |
+| **v0** | API / credits | v0 credit balance and on-demand balance | API key | official API |
+| **Venice** | API / credits | USD and DIEM balances, DIEM used of this epoch's allocation | API key | internal endpoint |
+| **Vercel AI Gateway** | API / credits | AI Gateway credit balance and total used | API key | official API |
+| **xAI API** | API / credits | Prepaid credit balance (team billing, management API) | API key | official API |
 <!-- providers:end -->
 
 Not possible today: **Le Chat** message limits (no source; Mistral Pro/Team budgets work), **Gemini** consumer AI
